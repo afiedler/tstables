@@ -6,7 +6,6 @@ import pytz
 class TsTableTestCase(unittest.TestCase):
 
     def test_partition_range_same_day(self):
-        print(tstables.TsTable)
         # 2014-04-01 01:00:00 UTC
         start_dt = datetime.datetime(2014,4,1,1,0,tzinfo=pytz.utc)
 
