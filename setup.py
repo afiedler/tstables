@@ -43,7 +43,7 @@ setup(
     tests_require = 'docutils >= 0.6',
 
     name = "tstables",
-    version = "0.0.1",
+    version = "0.0.2",
 
     # metadata for upload to PyPI
     author = "Andy Fiedler",
@@ -51,7 +51,7 @@ setup(
     description = "Handles large time series using PyTables and Pandas",
     license = "MIT",
     keywords = "time series high frequency HDF5",
-    url = "http://tstables.github.io/",   # project home page, if any
+    url = "http://github.com/afiedler/tstables",   # project home page, if any
 
     # could also include long_description, download_url, classifiers, etc.
 )

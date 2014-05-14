@@ -15,7 +15,6 @@ import tables
 import tstables
 import pandas.io.data as web
 from datetime import *
-import numpy
 
 # Create a class to describe the table structure. The column "timestamp" is required, and must be
 # in the first position (pos=0) and have the type Int64.

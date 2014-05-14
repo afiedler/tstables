@@ -104,12 +104,22 @@ class TsTable:
 				continue
 
 			if (max_group_dt is not None) and (max_group_dt < group_dt):
-				group_max_ts = group.ts_data.cols.timestamp[-1]
+				
+				if group.ts_data.nrows == 0:
+					group_max_ts = None
+				else:
+					group_max_ts = group.ts_data.cols.timestamp[-1]
+
 				if (group_max_ts is not None) and (max_ts is None or max_ts < group_max_ts):
 					max_ts = group_max_ts
 					max_group_dt = group_dt
 			elif (max_group_dt is None):
-				group_max_ts = group.ts_data.cols.timestamp[-1]
+			
+				if group.ts_data.nrows == 0:
+					group_max_ts = None
+				else:
+					group_max_ts = group.ts_data.cols.timestamp[-1]
+
 				if (group_max_ts is not None):
 					max_ts = group_max_ts
 					max_group_dt = group_dt
@@ -128,12 +138,21 @@ class TsTable:
 				continue
 
 			if (min_group_dt is not None) and (min_group_dt > group_dt):
-				group_min_ts = group.ts_data.cols.timestamp[0]
+				if group.ts_data.nrows == 0:
+					group_min_ts = None
+				else:
+					group_min_ts = group.ts_data.cols.timestamp[0]
+
 				if (group_min_ts is not None) and (min_ts is None or min_ts > group_min_ts):
 					min_ts = group_min_ts
 					min_group_dt = group_dt
 			elif (min_group_dt is None):
-				group_min_ts = group.ts_data.cols.timestamp[0]
+				
+				if group.ts_data.nrows == 0:
+					group_min_ts = None
+				else:
+					group_min_ts = group.ts_data.cols.timestamp[0]
+
 				if (group_min_ts is not None):
 					min_ts = group_min_ts
 					min_group_dt = group_dt
@@ -144,6 +163,13 @@ class TsTable:
 
 
 	def read_range(self,start_dt,end_dt,as_pandas_dataframe=True):
+		# Convert start_dt and end_dt to UTC if they are naive
+		if start_dt.tzinfo is None:
+			start_dt = pytz.utc.localize(start_dt)
+		if end_dt.tzinfo is None:
+			end_dt = pytz.utc.localize(end_dt)
+		
+
 		partitions = self.__dtrange_to_partition_ranges(start_dt,end_dt)
 		sorted_pkeys = sorted(partitions.keys())
 
