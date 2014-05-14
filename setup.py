@@ -1,4 +1,18 @@
 from setuptools import setup, find_packages
+import os
+
+# Handle the long description (read from README.txt, which is created by converting README.md)
+long_description = 'TsTables is a Python package to store time series data in HDF5 files using '
+'PyTables. It stores time series data into daily partitions and provides functions to query for '
+'subsets of data across partitions.\n'
+'Its goals are to support a workflow where tons (gigabytes) of time series data are '
+'appended periodically to a HDF5 file, and need to be read many times (quickly) for analytical '
+'models and research.'
+
+if os.path.exists('README.txt'):
+    long_description = open('README.txt').read()
+
+
 setup(
 
     # Package structure
@@ -52,6 +66,6 @@ setup(
     license = "MIT",
     keywords = "time series high frequency HDF5",
     url = "http://github.com/afiedler/tstables",   # project home page, if any
-
+    long_description = long_description
     # could also include long_description, download_url, classifiers, etc.
 )
