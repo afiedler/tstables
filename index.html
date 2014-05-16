@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset='utf-8'>
+    <meta http-equiv="X-UA-Compatible" content="chrome=1">
+    <meta name="viewport" content="width=640" />
+
+    <link rel="stylesheet" href="stylesheets/core.css" media="screen"/>
+    <link rel="stylesheet" href="stylesheets/mobile.css" media="handheld, only screen and (max-device-width:640px)"/>
+    <link rel="stylesheet" href="stylesheets/pygment_trac.css"/>
+
+    <script type="text/javascript" src="javascripts/modernizr.js"></script>
+    <script type="text/javascript" src="https://ajax.googleapis.com/ajax/libs/jquery/1.7.1/jquery.min.js"></script>
+    <script type="text/javascript" src="javascripts/headsmart.min.js"></script>
+    <script type="text/javascript">
+      $(document).ready(function () {
+        $('#main_content').headsmart()
+      })
+    </script>
+    <title>TsTables by afiedler</title>
+  </head>
+
+  <body>
+    <a id="forkme_banner" href="https://github.com/afiedler/tstables">View on GitHub</a>
+    <div class="shell">
+
+      <header>
+        <span class="ribbon-outer">
+          <span class="ribbon-inner">
+            <h1>TsTables</h1>
+            <h2>A Python package to store time series data in HDF5 files using PyTables</h2>
+          </span>
+          <span class="left-tail"></span>
+          <span class="right-tail"></span>
+        </span>
+      </header>
+
+      <section id="downloads">
+        <span class="inner">
+          <a href="https://github.com/afiedler/tstables/zipball/master" class="zip"><em>download</em> .ZIP</a><a href="https://github.com/afiedler/tstables/tarball/master" class="tgz"><em>download</em> .TGZ</a>
+        </span>
+      </section>
+
+
+      <span class="banner-fix"></span>
+
+
+      <section id="main_content">
+        <h1>
+<a name="tstables" class="anchor" href="#tstables"><span class="octicon octicon-link"></span></a>TsTables</h1>
+
+<p>TsTables is a Python package to store time series data in HDF5 files using PyTables. It stores time
+series data into daily partitions and provides functions to query for subsets of data across
+partitions.</p>
+
+<p>Its goals are to support a workflow where tons (gigabytes) of time series data are 
+appended periodically to a HDF5 file, and need to be read many times (quickly) for analytical models
+and research.</p>
+
+<h2>
+<a name="not-ready-for-use-yet" class="anchor" href="#not-ready-for-use-yet"><span class="octicon octicon-link"></span></a>Not ready for use yet</h2>
+
+<p>TsTables is not ready for use yet and is currently under development. The goal is to have something
+workable and being testing by end of May, 2014. If you are interested in the project (to contribute
+or learn when it is finished), email Andy Fiedler at <a href="mailto:andy@andyfiedler.com">andy@andyfiedler.com</a>.</p>
+      </section>
+
+      <footer>
+        <span class="ribbon-outer">
+          <span class="ribbon-inner">
+            <p>this project by <a href="https://github.com/afiedler">afiedler</a> can be found on <a href="https://github.com/afiedler/tstables">GitHub</a></p>
+          </span>
+          <span class="left-tail"></span>
+          <span class="right-tail"></span>
+        </span>
+        <p>Generated with <a href="http://pages.github.com">GitHub Pages</a> using Merlot</p>
+        <span class="octocat"></span>
+      </footer>
+
+    </div>
+
+    
+  </body>
+</html>
