@@ -68,6 +68,8 @@ class TsTable:
 			seconds=int(ts_seconds),microseconds=int(ts_milliseconds)*1000)
 		return dt
 
+	def __v_dtype(self):
+		return tables.description.dtype_from_descr(self.table_description)
 
 	def __fetch_rows_from_partition(self,partition_date,start_dt,end_dt):
 		try:
@@ -76,7 +78,7 @@ class TsTable:
 			d_group = m_group._v_groups[partition_date.strftime('d%d')]
 		except KeyError:
 			# If the partition group is missing, then return an empty array
-			return numpy.ndarray(shape=0,dtype=self.table_description._v_dtype)
+			return numpy.ndarray(shape=0,dtype=self.__v_dtype())
 
 		return d_group.ts_data.read_where('(timestamp >= {0}) & (timestamp < {1})'.format(
 			self.__dt_to_ts(start_dt),self.__dt_to_ts(end_dt)))
@@ -174,7 +176,7 @@ class TsTable:
 		sorted_pkeys = sorted(partitions.keys())
 
 		# Start with an empty array
-		result = numpy.ndarray(shape=0,dtype=self.table_description._v_dtype)
+		result = numpy.ndarray(shape=0,dtype=self.__v_dtype())
 
 		for p in sorted_pkeys:
 			result = numpy.concatenate(
