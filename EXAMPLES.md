@@ -40,3 +40,38 @@ read_end_dt = datetime(2014,1,31)
 
 jan = ts.read_range(read_start_dt,read_end_dt)
 ```
+
+### Load one month of minutely bitcoin price data
+
+This example loads one month of minutely Bitcoin Price Index data (source: http://coinbase.com/bpi)
+from a CSV file.
+
+First, you'll need to download the CSV file from http://afiedler.github.io/tstables/bpi_2014_01.csv.
+This example assumes that the CSV file is in the current directory.
+
+```python
+import tables
+import tstables
+import pandas
+from datetime import *
+
+# Class to use as the table discription
+class bpi_values(tables.IsDescription):
+    timestamp = tables.Int64Col(pos=0)
+    bpi = tables.Float64Col(pos=1)
+
+bpi = pandas.read_csv('bpi_2014_01.csv',index_col=0,names=['date','bpi'],parse_dates=True)
+
+f = tables.open_file('bpi.h5','a')
+
+ts = f.create_ts('/','BPI',bpi_values)
+
+ts.append(bpi)
+ts.flush()
+
+# Now, read in some data
+read_start_dt = datetime(2014,1,4,12,00)
+read_end_dt = datetime(2014,1,4,14,30)
+
+rows = ts.read_range(read_start_dt,read_end_dt)
+```
