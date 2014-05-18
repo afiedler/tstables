@@ -57,7 +57,7 @@ setup(
     tests_require = 'docutils >= 0.6',
 
     name = "tstables",
-    version = "0.0.3",
+    version = "0.0.4",
 
     # metadata for upload to PyPI
     author = "Andy Fiedler",
