@@ -9,6 +9,9 @@ import re
 class TsTable:
     EPOCH = datetime.datetime(1970,1,1,tzinfo=pytz.utc)
 
+    # Partition size is one day (in milliseconds)
+    PARTITION_SIZE = numpy.int64(86400000)
+
     def __init__(self,pt_file,root_group,description,title="",filters=None,
         expectedrows_per_partition=10000,chunkshape=None,byteorder=None):
         self.file = pt_file
@@ -20,38 +23,48 @@ class TsTable:
         self.table_chunkshape = chunkshape
         self.table_byteorder = byteorder
 
-    @staticmethod   
-    def __dtrange_to_partition_ranges(start_dt,end_dt):
+    @classmethod
+    def __tsrange_to_partition_ranges(self,start_ts,end_ts):
+        start_partition = start_ts // self.PARTITION_SIZE
+        end_partition = end_ts // self.PARTITION_SIZE
 
-        # We assume that start_ts and end_ts are in UTC at this point
+        # Handle the special case when there is only one partition
+        if start_partition == end_partition:
+            return {start_partition: (start_ts, end_ts)}
 
-        # Partition ranges are tuples with a partition_start datetime and partition_end datetime
-        # The range is inclusive of the start and excludes the end: [partition_start, partition_end)
-        delta = end_dt - start_dt
-        num_days = delta.days + (1 if (delta.seconds > 0) | (delta.microseconds > 0) else 0)
-
-        # Ensure num_days is at least one, so that there is at least one partition
-        if num_days == 0:
-            num_days = 1
-
-        partition_subsets = dict.fromkeys([
-            start_dt.date() + datetime.timedelta(days=x) for x in range(0,num_days)])
-
-        for k in partition_subsets.keys():
-            if start_dt.date() == k:
-                partition_start = start_dt
+        partition_ranges = {}
+        for p in range(start_partition,end_partition+1):
+            if p == start_partition:
+                # append truncated range from start_ts to the end of the partition
+                partition_ranges[p] = tuple((start_ts, (start_partition+1)*self.PARTITION_SIZE-1))
+            elif p == end_partition:
+                # append truncated range from start of the partition to end_ts
+                partition_ranges[p] = tuple(((end_partition*self.PARTITION_SIZE), end_ts))
             else:
-                partition_start = datetime.datetime.combine(k,pytz.utc.localize(datetime.time.min))
-            
-            if end_dt.date() == k:
-                partition_end = end_dt
-            else:
-                partition_end = datetime.datetime.combine(
-                    k+datetime.timedelta(days=1),pytz.utc.localize(datetime.time.min))
-            
-            partition_subsets[k] = partition_start, partition_end
+                partition_ranges[p] = tuple((p*self.PARTITION_SIZE, (p+1)*self.PARTITION_SIZE - 1))
 
-        return partition_subsets
+        return partition_ranges
+
+
+
+    @classmethod
+    def __dtrange_to_partition_ranges(self,start_dt,end_dt):
+
+        # We assume that start_dt and end_dt are in UTC at this point
+        start_ts = self.__dt_to_ts(start_dt)
+        end_ts = self.__dt_to_ts(end_dt)
+
+        ts_partitions = self.__tsrange_to_partition_ranges(start_ts,end_ts)
+
+        dt_partitions = {}
+
+        for k in ts_partitions.keys():
+            day = self.__ts_to_dt(k*self.PARTITION_SIZE).date()
+            s_ts = ts_partitions[k][0]
+            e_ts = ts_partitions[k][1]
+            dt_partitions[day] = tuple((self.__ts_to_dt(s_ts),self.__ts_to_dt(e_ts)))
+
+        return dt_partitions
     
     @classmethod
     def __dt_to_ts(self,dt):
@@ -66,7 +79,7 @@ class TsTable:
         # Trying to avoid a lossy conversion here. If we were to cast the ts as a timedelta using
         # just milliseconds, we might overflow the buffer
         ts_milliseconds = ts % 1000
-        ts_seconds = (ts - (ts % 1000)) % 86400
+        ts_seconds = numpy.int64(numpy.divide((ts - (ts % 1000)) % 86400000,1000))
         ts_days = numpy.int64(numpy.divide(ts - ts_milliseconds - ts_seconds*1000,86400000))
         # The reason we do it this way it to attempt to avoid overflows for any component
         dt = self.EPOCH + datetime.timedelta(days=int(ts_days),
@@ -85,7 +98,7 @@ class TsTable:
             # If the partition group is missing, then return an empty array
             return numpy.ndarray(shape=0,dtype=self.__v_dtype())
 
-        return d_group.ts_data.read_where('(timestamp >= {0}) & (timestamp < {1})'.format(
+        return d_group.ts_data.read_where('(timestamp >= {0}) & (timestamp <= {1})'.format(
             self.__dt_to_ts(start_dt),self.__dt_to_ts(end_dt)))
 
     def __fetch_first_table(self):
@@ -284,7 +297,7 @@ class TsTable:
         split_on_idx = []
         cursor = 0
         for ts_split in split_on_ts:
-            while (cursor < wbufRA.size) and (wbufRA['timestamp'][cursor] < ts_split):
+            while (cursor < wbufRA.size) and (wbufRA['timestamp'][cursor] <= ts_split):
                 cursor = cursor + 1
             
             split_on_idx.append(cursor)

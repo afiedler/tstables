@@ -1,4 +1,5 @@
-from tstables.tests import test_tstable
+from tstables.tests import test_tstable_static
+from tstables.tests import test_tstable_file
 #from tstables import tstable
 
 def suite():
@@ -6,7 +7,8 @@ def suite():
     import doctest
     suite = unittest.TestSuite()
     #suite.addTests(doctest.DocTestSuite(tstable))
-    suite.addTests(test_tstable.suite())
+    suite.addTests(test_tstable_static.suite())
+    suite.addTests(test_tstable_file.suite())
     return suite
 
 if __name__ == '__main__':
