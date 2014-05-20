@@ -33,6 +33,7 @@ class TsTableFileTestCase(unittest.TestCase):
         # - the group exists
         # - it has a _TS_TABLES_CLASS attribute equal to "TIMESERIES"
         # - it has a table at yYYYY/mMM/dDD/ts_data, where YYY-MM-DD is today (in UTC)
+        # - the dtype is correct
         self.assertEqual(self.h5_file.root.EURUSD.__class__, tables.Group)
         self.assertEqual(self.h5_file.root.EURUSD._v_attrs._TS_TABLES_CLASS,'TIMESERIES')
 
@@ -42,6 +43,10 @@ class TsTableFileTestCase(unittest.TestCase):
             path[2])._f_get_child('ts_data')
 
         self.assertEqual(ts_data.attrs._TS_TABLES_EXPECTEDROWS_PER_PARTITION,10000)
+
+        self.assertEqual(ts_data._v_dtype[0],tables.dtype_from_descr(Price)[0])
+        self.assertEqual(ts_data._v_dtype[1],tables.dtype_from_descr(Price)[1])
+
 
     def test_create_ts_with_invalid_description_incorrect_order(self):
         class InvalidDesc(tables.IsDescription):
@@ -96,6 +101,17 @@ class TsTableFileTestCase(unittest.TestCase):
         for idx,p in enumerate(rows_read['price']):
             self.assertEqual(p,rows['price'][idx])
 
+    def __load_csv_data(self,csv):
+        sfile = io.StringIO(csv)
+
+        # Note: don't need the 'timestamp' column in the dtype param here because it will become the DatetimeIndex.
+        rows = pandas.read_csv(sfile,parse_dates=[0],index_col=0,names=['timestamp', 'price'],dtype={'price': 'i4'})
+
+        ts = self.h5_file.create_ts('/','EURUSD',description=Price)
+        ts.append(rows)
+
+        return ts,rows
+
     def test_load_cross_partition_boundary_timestamps(self):
 
         # This data should just cross the partition boundary between 5/4 and 5/5
@@ -105,13 +121,7 @@ class TsTableFileTestCase(unittest.TestCase):
                  2014-05-05T00:00:00.000Z,4
                  2014-05-05T00:00:00.001Z,5"""
 
-        sfile = io.StringIO(csv)
-
-        # Note: don't need the 'timestamp' column in the dtype param here because it will become the DatetimeIndex.
-        rows = pandas.read_csv(sfile,parse_dates=[0],index_col=0,names=['timestamp', 'price'],dtype={'price': 'i4'})
-
-        ts = self.h5_file.create_ts('/','EURUSD',description=Price)
-        ts.append(rows)
+        ts,rows = self.__load_csv_data(csv)
 
         # Inspect to ensure that data has been stored correctly
         tbl = ts.root_group.y2014.m05.d04.ts_data
@@ -138,6 +148,68 @@ class TsTableFileTestCase(unittest.TestCase):
         # Confirm equality
         for idx,p in enumerate(rows_read['price']):
             self.assertEqual(p,rows['price'][idx])
+
+    def test_read_data_end_date_before_start_date(self):
+        csv = """2014-05-04T23:59:59.998Z,1
+                 2014-05-04T23:59:59.999Z,2
+                 2014-05-04T23:59:59.999Z,3
+                 2014-05-05T00:00:00.000Z,4
+                 2014-05-05T00:00:00.001Z,5"""
+
+        ts,rows = self.__load_csv_data(csv)
+
+        # Try to fetch with end_dt before start_dt
+        end_dt = datetime.datetime(2014,5,5)
+        start_dt = datetime.datetime(2014,5,4)
+        self.assertRaises(AttributeError, ts.read_range, start_dt, end_dt)
+
+        # This should work, and return just this row: '2014-05-05T00:00:00.000Z,4'
+        start_dt = end_dt
+        rng = ts.read_range(start_dt,end_dt)
+
+        self.assertEqual(rng['price'].size, 1)
+        self.assertEqual(rng['price'][0],4)
+
+    def test_no_data_stored_in_missing_day(self):
+        # Note that May 5 is missing
+        csv = """2014-05-04T23:59:59.998Z,1
+                 2014-05-04T23:59:59.999Z,2
+                 2014-05-04T23:59:59.999Z,3
+                 2014-05-06T00:00:00.000Z,4
+                 2014-05-06T00:00:00.001Z,5"""
+
+        ts,rows = self.__load_csv_data(csv)
+
+        tbl = ts.root_group.y2014.m05.d05.ts_data
+
+        # No rows on the 5th
+        self.assertEqual(tbl.nrows,0)
+
+        tbl = ts.root_group.y2014.m05.d06.ts_data
+
+        # Two rows on the 6th
+        self.assertEqual(tbl.nrows,2)
+
+        tbl = ts.root_group.y2014.m05.d04.ts_data
+
+        # Three rows on the 4th
+        self.assertEqual(tbl.nrows,3)
+
+    def test_append_no_data(self):
+        # No data, just making sure this doesn't throw an exception or anything
+        csv = """"""
+
+        ts,rows = self.__load_csv_data(csv)
+
+        self.assertEqual(rows['price'].size, 0)
+
+
+
+
+
+
+
+
 
 
 

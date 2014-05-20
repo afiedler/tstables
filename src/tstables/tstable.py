@@ -180,14 +180,16 @@ class TsTable:
         
         return min_ts
 
-
-
     def read_range(self,start_dt,end_dt,as_pandas_dataframe=True):
         # Convert start_dt and end_dt to UTC if they are naive
         if start_dt.tzinfo is None:
             start_dt = pytz.utc.localize(start_dt)
         if end_dt.tzinfo is None:
             end_dt = pytz.utc.localize(end_dt)
+
+
+        if start_dt < end_dt:
+            raise AttributeError('start_dt must be >= end_dt')
         
 
         partitions = self.__dtrange_to_partition_ranges(start_dt,end_dt)
@@ -208,11 +210,12 @@ class TsTable:
 
         return result
 
-
     def append(self,rows,convert_strings=False):
         # This part is specific to pandas support. If rows is a pandas DataFrame, convert it to a
         # format suitable to PyTables
         if rows.__class__ == pandas.core.frame.DataFrame:
+            if rows.empty:
+                return # Do nothing if we are appending nothing
             if rows.index.__class__ != pandas.tseries.index.DatetimeIndex:
                 raise ValueError('when rows is a DataFrame, the index must be a DatetimeIndex.')
 

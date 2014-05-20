@@ -54,23 +54,27 @@ import tstables
 import pandas
 from datetime import *
 
-# Class to use as the table discription
-class bpi_values(tables.IsDescription):
+# Class to use as the table description
+class BpiValues(tables.IsDescription):
     timestamp = tables.Int64Col(pos=0)
     bpi = tables.Float64Col(pos=1)
 
+# Use pandas to read in the CSV data
 bpi = pandas.read_csv('bpi_2014_01.csv',index_col=0,names=['date','bpi'],parse_dates=True)
 
 f = tables.open_file('bpi.h5','a')
 
-ts = f.create_ts('/','BPI',bpi_values)
+# Create a new time series
+ts = f.create_ts('/','BPI',BpiValues)
 
+# Append the BPI data
 ts.append(bpi)
-ts.flush()
 
-# Now, read in some data
+# Read in some data
 read_start_dt = datetime(2014,1,4,12,00)
 read_end_dt = datetime(2014,1,4,14,30)
 
 rows = ts.read_range(read_start_dt,read_end_dt)
+
+# `rows` will be a pandas DataFrame with a DatetimeIndex.
 ```

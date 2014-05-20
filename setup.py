@@ -12,6 +12,8 @@ long_description = 'TsTables is a Python package to store time series data in HD
 if os.path.exists('README.txt'):
     long_description = open('README.txt').read()
 
+exec(open('src/tstables/_version.py').read())
+
 
 setup(
 
@@ -57,7 +59,7 @@ setup(
     tests_require = 'docutils >= 0.6',
 
     name = "tstables",
-    version = "0.0.5",
+    version = __version__,
 
     # metadata for upload to PyPI
     author = "Andy Fiedler",
@@ -67,5 +69,5 @@ setup(
     keywords = "time series high frequency HDF5",
     url = "http://github.com/afiedler/tstables",   # project home page, if any
     long_description = long_description
-    # could also include long_description, download_url, classifiers, etc.
+    # could also include download_url, classifiers, etc.
 )

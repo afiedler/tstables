@@ -15,7 +15,7 @@
 TsTables is a wrapper for PyTables that allows you to manage very large time series.
 
 """
-
+from ._version import __version__
 from tstables.tstable import TsTable
 from tstables.file import create_ts
 from tstables.group import timeseries_repr
