@@ -36,7 +36,7 @@ setup(
     #
     # install the executable
     entry_points = {
-        #'console_scripts': ['helloworld = greatings.helloworld:main']
+        'console_scripts': ['tstables_benchmark = tstables.Benchmark:main']
     },
 
     # Dependencies

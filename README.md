@@ -13,31 +13,60 @@ and research.
 This example reads in minutely bitcoin price data and then fetches a range of data. For the full example here, and other
 examples, see [EXAMPLES.md](EXAMPLES.md).
 
-```python
-# Class to use as the table description
-class BpiValues(tables.IsDescription):
-    timestamp = tables.Int64Col(pos=0)
-    bpi = tables.Float64Col(pos=1)
+    ```python
+    # Class to use as the table description
+    class BpiValues(tables.IsDescription):
+        timestamp = tables.Int64Col(pos=0)
+        bpi = tables.Float64Col(pos=1)
+    
+    # Use pandas to read in the CSV data
+    bpi = pandas.read_csv('bpi_2014_01.csv',index_col=0,names=['date','bpi'],parse_dates=True)
+    
+    f = tables.open_file('bpi.h5','a')
+    
+    # Create a new time series
+    ts = f.create_ts('/','BPI',BpiValues)
+    
+    # Append the BPI data
+    ts.append(bpi)
+    
+    # Read in some data
+    read_start_dt = datetime(2014,1,4,12,00)
+    read_end_dt = datetime(2014,1,4,14,30)
+    
+    rows = ts.read_range(read_start_dt,read_end_dt)
+    
+    # `rows` will be a pandas DataFrame with a DatetimeIndex.
+    ```
 
-# Use pandas to read in the CSV data
-bpi = pandas.read_csv('bpi_2014_01.csv',index_col=0,names=['date','bpi'],parse_dates=True)
+## Preliminary benchmarks
 
-f = tables.open_file('bpi.h5','a')
+The main goal of TsTables is to make it very fast to read subsets of data, given a date range. TsTables currently
+includes a simple benchmark to track progress towards that goal. To run it, after installing the package, you can run 
+`tstables_benchmark` from the command line or you can import the package in a Python console and run it directly.
 
-# Create a new time series
-ts = f.create_ts('/','BPI',BpiValues)
+    ```python
+    import tstables
+    tstables.Benchmark.main()
+    ```
+    
+Running the benchmark both prints results out to the screen and saves them in `benchmark.txt`.
 
-# Append the BPI data
-ts.append(bpi)
+The benchmark loads one year of random secondly data (just the timestamp column and a 32-bit integer "price" column) 
+into a file, and then it reads random one hour chunks of data.
 
-# Read in some data
-read_start_dt = datetime(2014,1,4,12,00)
-read_end_dt = datetime(2014,1,4,14,30)
+Currently, here's some benchmarks of TsTables (from a MacBook Pro with a SSD):
 
-rows = ts.read_range(read_start_dt,read_end_dt)
+Metric                                                      | Results
+------------------------------------------------------------|-----------------
+Append one month of data (2.67 million rows)                | 96.63 seconds
+Fetch one hour of data into memory                          | 0.565 seconds
+File size (one year of data, 32 million rows, uncompressed) | 391.6 MB
 
-# `rows` will be a pandas DataFrame with a DatetimeIndex.
-```
+The append speed is currently very slow, and should be optimized soon. The read speed hasn't been optimized yet, but is 
+fairly fast, especially compared to storing time series data in a RBDMS. HDF5 supports zlib and other compression
+algorithms, which can be enabled through PyTables to reduce the file size. Without compression, the HDF5 file size is
+approximately 1.8% larger than the raw data in binary form, a drastically lower overhead than CSV files.
 
 ## Pre-release software
 

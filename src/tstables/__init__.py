@@ -21,6 +21,7 @@ from tstables.file import create_ts
 from tstables.group import timeseries_repr
 from tstables.group import timeseries_str
 from tstables.group import get_timeseries
+from tstables.benchmark import Benchmark
 import tables
 
 # Augment the PyTables File class
