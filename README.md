@@ -13,31 +13,31 @@ and research.
 This example reads in minutely bitcoin price data and then fetches a range of data. For the full example here, and other
 examples, see [EXAMPLES.md](EXAMPLES.md).
 
-    ```python
-    # Class to use as the table description
-    class BpiValues(tables.IsDescription):
-        timestamp = tables.Int64Col(pos=0)
-        bpi = tables.Float64Col(pos=1)
-    
-    # Use pandas to read in the CSV data
-    bpi = pandas.read_csv('bpi_2014_01.csv',index_col=0,names=['date','bpi'],parse_dates=True)
-    
-    f = tables.open_file('bpi.h5','a')
-    
-    # Create a new time series
-    ts = f.create_ts('/','BPI',BpiValues)
-    
-    # Append the BPI data
-    ts.append(bpi)
-    
-    # Read in some data
-    read_start_dt = datetime(2014,1,4,12,00)
-    read_end_dt = datetime(2014,1,4,14,30)
-    
-    rows = ts.read_range(read_start_dt,read_end_dt)
-    
-    # `rows` will be a pandas DataFrame with a DatetimeIndex.
-    ```
+```python
+# Class to use as the table description
+class BpiValues(tables.IsDescription):
+    timestamp = tables.Int64Col(pos=0)
+    bpi = tables.Float64Col(pos=1)
+
+# Use pandas to read in the CSV data
+bpi = pandas.read_csv('bpi_2014_01.csv',index_col=0,names=['date','bpi'],parse_dates=True)
+
+f = tables.open_file('bpi.h5','a')
+
+# Create a new time series
+ts = f.create_ts('/','BPI',BpiValues)
+
+# Append the BPI data
+ts.append(bpi)
+
+# Read in some data
+read_start_dt = datetime(2014,1,4,12,00)
+read_end_dt = datetime(2014,1,4,14,30)
+
+rows = ts.read_range(read_start_dt,read_end_dt)
+
+# `rows` will be a pandas DataFrame with a DatetimeIndex.
+```
 
 ## Preliminary benchmarks
 
@@ -45,10 +45,10 @@ The main goal of TsTables is to make it very fast to read subsets of data, given
 includes a simple benchmark to track progress towards that goal. To run it, after installing the package, you can run 
 `tstables_benchmark` from the command line or you can import the package in a Python console and run it directly.
 
-    ```python
-    import tstables
-    tstables.Benchmark.main()
-    ```
+```python
+import tstables
+tstables.Benchmark.main()
+```
     
 Running the benchmark both prints results out to the screen and saves them in `benchmark.txt`.
 
