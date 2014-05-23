@@ -159,12 +159,12 @@ class TsTableFileTestCase(unittest.TestCase):
         ts,rows = self.__load_csv_data(csv)
 
         # Try to fetch with end_dt before start_dt
-        end_dt = datetime.datetime(2014,5,5)
-        start_dt = datetime.datetime(2014,5,4)
+        end_dt = datetime.datetime(2014,5,1)
+        start_dt = datetime.datetime(2014,5,5)
         self.assertRaises(AttributeError, ts.read_range, start_dt, end_dt)
 
         # This should work, and return just this row: '2014-05-05T00:00:00.000Z,4'
-        start_dt = end_dt
+        end_dt = start_dt
         rng = ts.read_range(start_dt,end_dt)
 
         self.assertEqual(rng['price'].size, 1)
@@ -203,24 +203,12 @@ class TsTableFileTestCase(unittest.TestCase):
 
         self.assertEqual(rows['price'].size, 0)
 
+    def test_no_group_created_on_create_ts_exception(self):
+        self.assertRaises(ValueError,self.h5_file.create_ts,'/','EURUSD',description=Price,
+                          chunkshape='an invalid chunkshape')
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+        # Should not have created the group
+        self.assertRaises(tables.NoSuchNodeError,self.h5_file.root._f_get_child,'EURUSD')
 
 
 

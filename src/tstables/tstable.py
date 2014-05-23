@@ -188,8 +188,8 @@ class TsTable:
             end_dt = pytz.utc.localize(end_dt)
 
 
-        if start_dt < end_dt:
-            raise AttributeError('start_dt must be >= end_dt')
+        if start_dt > end_dt:
+            raise AttributeError('start_dt must be <= end_dt')
         
 
         partitions = self.__dtrange_to_partition_ranges(start_dt,end_dt)
