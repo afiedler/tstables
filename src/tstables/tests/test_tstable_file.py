@@ -195,6 +195,16 @@ class TsTableFileTestCase(unittest.TestCase):
         # Three rows on the 4th
         self.assertEqual(tbl.nrows,3)
 
+    def test_exception_on_unsorted_data(self):
+        # Note that this is unsorted
+        csv = """2014-05-05T23:59:59.998Z,1
+                 2014-05-04T23:59:59.999Z,2
+                 2014-05-04T23:59:59.999Z,3
+                 2014-05-06T00:00:00.000Z,4
+                 2014-05-06T00:00:00.001Z,5"""
+
+        self.assertRaises(ValueError, self.__load_csv_data, csv)
+
     def test_append_no_data(self):
         # No data, just making sure this doesn't throw an exception or anything
         csv = """"""
