@@ -59,14 +59,14 @@ Currently, here's some benchmarks of TsTables (from a MacBook Pro with a SSD):
 
 Metric                                                      | Results
 ------------------------------------------------------------|-----------------
-Append one month of data (2.67 million rows)                | 96.63 seconds
-Fetch one hour of data into memory                          | 0.565 seconds
+Append one month of data (2.67 million rows)                | 0.711 seconds
+Fetch one hour of data into memory                          | 0.748 seconds
 File size (one year of data, 32 million rows, uncompressed) | 391.6 MB
 
-The append speed is currently very slow, and should be optimized soon. The read speed hasn't been optimized yet, but is 
-fairly fast, especially compared to storing time series data in a RBDMS. HDF5 supports zlib and other compression
-algorithms, which can be enabled through PyTables to reduce the file size. Without compression, the HDF5 file size is
-approximately 1.8% larger than the raw data in binary form, a drastically lower overhead than CSV files.
+The read speed hasn't been optimized yet, but is  fairly fast, especially compared to storing time series data in a
+RBDMS. HDF5 supports zlib and other compression algorithms, which can be enabled through PyTables to reduce the file 
+size. Without compression, the HDF5 file size is approximately 1.8% larger than the raw data in binary form, a 
+drastically lower overhead than CSV files.
 
 ## Pre-release software
 
