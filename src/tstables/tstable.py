@@ -288,30 +288,17 @@ class TsTable:
         possible_partitions = self.__dtrange_to_partition_ranges(min_dt,max_dt)
 
         sorted_pkeys = sorted(possible_partitions.keys())
-        split_on_ts = []
 
         # For each partition, we are splitting on the end date
-        for p in sorted_pkeys:
-            split_on_ts.append(self.__dt_to_ts(possible_partitions[p][1]))
-
-        # Drop the last end date, since there is no need to split where nothing follows
-        split_on_ts.pop()
-
-        # Now, we need to loop through the entire array to be imported and figure out which indexes
-        # to split on. Do we really need to loop here?
         split_on_idx = []
-        cursor = 0
-        for ts_split in split_on_ts:
-            while (cursor < wbufRA.size) and (wbufRA['timestamp'][cursor] <= ts_split):
-                cursor = cursor + 1
-            
-            split_on_idx.append(cursor)
-
-        # Need to potentially backfill with the last timestamp if split_on_idx is not the same
-        # length as split_on_ts
-        if len(split_on_idx) < len(split_on_ts):
-            while len(split_on_idx) < len(split_on_ts):
-                split_on_idx.append(wbufRA[-1][0])
+        for p in sorted_pkeys:
+            # p_max_ts is the maximum value of the timestamp column that SHOULD be included in this
+            # partition.
+            # We need to determine the row index of the row AFTER the last row where p_max_ts is <= to
+            # the timestamp.
+            p_max_ts = self.__dt_to_ts(possible_partitions[p][1])
+            split_on = numpy.searchsorted(wbufRA['timestamp'], p_max_ts, side='right')
+            split_on_idx.append(split_on)
 
         # Now, split the array
         split_wbufRA = numpy.split(wbufRA,split_on_idx)
