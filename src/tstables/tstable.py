@@ -225,33 +225,32 @@ class TsTable:
             if rows.index.__class__ != pandas.tseries.index.DatetimeIndex:
                 raise ValueError('when rows is a DataFrame, the index must be a DatetimeIndex.')
 
-            # Convert the datetime64 index to milliseconds and then to int64
-            indexint64 = rows.index.values.astype('datetime64[ms]').astype('int64')
+            # Convert to records
+            records = rows.to_records(index=True,convert_datetime64=False)
 
-            # Convert to records, excluding the index
-            records = rows.to_records(index=False)
-
-            # Pandas stores strings internally as variable-length strings, which are converted to objects in NumPy
-            # PyTables can't store those in a StringCol, so this makes a conversion.
+            # Need to make two type conversions:
+            # 1. Pandas stores strings internally as variable-length strings, which are converted to objects in NumPy
+            #    PyTables can't store those in a StringCol, so this converts to fixed-length strings if convert_strings
+            #    set to True.
+            # 2. Need to convert the timestamp to datetime64[ms] (milliseconds)
 
             dest_dtype = self.__fetch_first_table().description._v_dtype
-            if convert_strings:
-                new_descr = []
-                existing_descr = records.dtype.descr
-                for idx,d in enumerate(existing_descr):
-                    # records dtype is something like |O8 and dest dt is a string (add 1 to index since "timestamp"
-                    # is excluded
-                    if existing_descr[idx][1] == '|O8' and dest_dtype[idx+1].char == 'S':
-                        new_descr.append((existing_descr[idx][0], dest_dtype[idx+1]))
-                    else:
-                        new_descr.append(existing_descr[idx])
 
-                # recast as string cols
-                records = records.astype(numpy.dtype(new_descr))
+            new_descr = []
+            existing_descr = records.dtype.descr
 
+            for idx,d in enumerate(existing_descr):
+                if existing_descr[idx][1] == '|O8' and dest_dtype[idx].char == 'S' and convert_strings:
+                    # records dtype is something like |O8 and dest dt is a string
+                    new_descr.append((existing_descr[idx][0], dest_dtype[idx]))
+                elif idx == 0:
+                    # Make sure timestamp is in milliseconds
+                    new_descr.append((existing_descr[idx][0], '<M8[ms]'))
+                else:
+                    new_descr.append(existing_descr[idx])
 
-            # Merge timestamp column
-            rows = numpy.lib.recfunctions.merge_arrays((indexint64,records))
+            # recast to the new type
+            rows = records.astype(numpy.dtype(new_descr))
 
         # Try to convert the object into a recarray compliant with table. This code is stolen from
         # PyTable's append method.
