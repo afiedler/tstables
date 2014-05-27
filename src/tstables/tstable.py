@@ -271,12 +271,10 @@ class TsTable:
 
         # We also need to confirm that the rows are sorted by timestamp. This is an additional
         # constraint of TsTables.
-        prev_ts = numpy.iinfo('int64').min
-        for r in wbufRA: # probably not ideal to loop here. is there a faster way?
-            if r[0] < prev_ts:
-                raise ValueError("timestamp column must be sorted in ascending order.")
+        if not (numpy.diff(wbufRA['timestamp']) >= 0).all():
+            raise ValueError("timestamp column must be sorted in ascending order.")
 
-        # Array is sorted at this point, so min and max are easy to get
+        # Array is confirmed sorted at this point, so min and max are easy to get
         min_ts = wbufRA[0][0]
         max_ts = wbufRA[-1][0]
 
@@ -301,8 +299,7 @@ class TsTable:
         split_on_ts.pop()
 
         # Now, we need to loop through the entire array to be imported and figure out which indexes
-        # to split on. Ideally, this loop could be combined with the loop above that checks for
-        # sorting.
+        # to split on. Do we really need to loop here?
         split_on_idx = []
         cursor = 0
         for ts_split in split_on_ts:
