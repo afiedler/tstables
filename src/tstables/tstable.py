@@ -98,8 +98,14 @@ class TsTable:
             # If the partition group is missing, then return an empty array
             return numpy.ndarray(shape=0,dtype=self.__v_dtype())
 
-        return d_group.ts_data.read_where('(timestamp >= {0}) & (timestamp <= {1})'.format(
-            self.__dt_to_ts(start_dt),self.__dt_to_ts(end_dt)))
+        # It is faster to fetch the entire partition into memory and process it with NumPy than to use Table.read_where
+        p_data = d_group.ts_data.read()
+        start_ts = self.__dt_to_ts(start_dt)
+        end_ts = self.__dt_to_ts(end_dt)
+        start_idx = numpy.searchsorted(p_data['timestamp'], start_ts, side='left')
+        end_idx = numpy.searchsorted(p_data['timestamp'], end_ts, side='right')
+
+        return p_data[start_idx:end_idx]
 
     def __fetch_first_table(self):
         y_group = self.root_group._f_list_nodes()[0]
