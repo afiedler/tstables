@@ -67,8 +67,7 @@ HDF5 supports zlib and other compression algorithms, which can be enabled throug
 size. Without compression, the HDF5 file size is approximately 1.8% larger than the raw data in binary form, a 
 drastically lower overhead than CSV files.
 
-## Pre-release software
+## Contributing
 
-TsTables is currently under development and has yet to be used extensively in production. It is reaching the point where
-it is reasonably well-tested, so if you'd like to use it, feel free! If you are interested in the project (to contribute
-or to hear about updates), email Andy Fiedler at <andy@andyfiedler.com>.
+If you are interested in the project (to contribute
+or to hear about updates), email Andy Fiedler at <andy@andyfiedler.com> or submit a pull request.

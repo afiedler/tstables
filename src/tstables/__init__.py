@@ -8,11 +8,15 @@
 #
 ########################################################################
 
-"""TsTables, very large time series with PyTables
+"""TsTables is a Python package to store time series data in HDF5 files using PyTables and Pandas
 
-:URL: http://tstables.github.io/
+:URL: http://afiedler.github.io/tstables
 
-TsTables is a wrapper for PyTables that allows you to manage very large time series.
+TsTables is a Python package to store time series data in HDF5 files using PyTables. It stores time series data into
+daily partitions and provides functions to query for subsets of data across partitions.
+
+Its goals are to support a workflow where tons (gigabytes) of time series data are appended periodically to a HDF5 file,
+and need to be read many times (quickly) for analytical models and research.
 
 """
 from ._version import __version__
