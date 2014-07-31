@@ -190,7 +190,7 @@ class TsTable:
         return self.__ts_to_dt(self.__get_min_ts())
 
     def max_dt(self):
-        return self.__ts_to_dt(self.__get_min_ts())
+        return self.__ts_to_dt(self.__get_max_ts())
 
     def read_range(self,start_dt,end_dt,as_pandas_dataframe=True):
         # Convert start_dt and end_dt to UTC if they are naive
