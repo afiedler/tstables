@@ -39,6 +39,19 @@ rows = ts.read_range(read_start_dt,read_end_dt)
 # `rows` will be a pandas DataFrame with a DatetimeIndex.
 ```
 
+Here is how to open a pre-existing `bpi.h5` HDF5 file and get that timeseries from it.
+
+```python
+f = tables.open_file('bpi.h5','r')
+ts = f.root.BPI._f_get_timeseries()
+
+# Read in some data
+read_start_dt = datetime(2014,1,4,12,00)
+read_end_dt = datetime(2014,1,4,14,30)
+
+rows = ts.read_range(read_start_dt,read_end_dt)
+```
+
 ## Preliminary benchmarks
 
 The main goal of TsTables is to make it very fast to read subsets of data, given a date range. TsTables currently
