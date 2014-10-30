@@ -52,6 +52,13 @@ read_end_dt = datetime(2014,1,4,14,30)
 rows = ts.read_range(read_start_dt,read_end_dt)
 ```
 
+## Running unit tests
+
+You can run the unit test suite from the command line at the root of the repository:
+
+`python setup.py test`
+
+
 ## Preliminary benchmarks
 
 The main goal of TsTables is to make it very fast to read subsets of data, given a date range. TsTables currently
