@@ -4,7 +4,10 @@ import unittest
 import datetime
 import pytz
 import tempfile
-import io
+try:
+    from io import StringIO
+except ImportError:
+    from cStringIO import StringIO
 import os
 import pandas
 
@@ -67,13 +70,13 @@ class TsTableFileTestCase(unittest.TestCase):
     def test_load_same_timestamp(self):
 
         # Test data that is multiple rows with the same timestamp
-        csv = """2014-05-05T01:01:01.100Z,1
+        csv = u"""2014-05-05T01:01:01.100Z,1
                  2014-05-05T01:01:01.100Z,2
                  2014-05-05T01:01:01.100Z,3
                  2014-05-05T01:01:01.100Z,4
                  2014-05-05T01:01:01.100Z,5"""
 
-        sfile = io.StringIO(csv)
+        sfile = StringIO(csv)
 
         # Note: don't need the 'timestamp' column in the dtype param here because it will become the DatetimeIndex.
         rows = pandas.read_csv(sfile,parse_dates=[0],index_col=0,names=['timestamp', 'price'],dtype={'price': 'i4'})
@@ -102,7 +105,7 @@ class TsTableFileTestCase(unittest.TestCase):
             self.assertEqual(p,rows['price'][idx])
 
     def __load_csv_data(self,csv):
-        sfile = io.StringIO(csv)
+        sfile = StringIO(csv)
 
         # Note: don't need the 'timestamp' column in the dtype param here because it will become the DatetimeIndex.
         rows = pandas.read_csv(sfile,parse_dates=[0],index_col=0,names=['timestamp', 'price'],dtype={'price': 'i4'})
@@ -115,7 +118,7 @@ class TsTableFileTestCase(unittest.TestCase):
     def test_load_cross_partition_boundary_timestamps(self):
 
         # This data should just cross the partition boundary between 5/4 and 5/5
-        csv = """2014-05-04T23:59:59.998Z,1
+        csv = u"""2014-05-04T23:59:59.998Z,1
                  2014-05-04T23:59:59.999Z,2
                  2014-05-04T23:59:59.999Z,3
                  2014-05-05T00:00:00.000Z,4
@@ -150,7 +153,7 @@ class TsTableFileTestCase(unittest.TestCase):
             self.assertEqual(p,rows['price'][idx])
 
     def test_read_data_end_date_before_start_date(self):
-        csv = """2014-05-04T23:59:59.998Z,1
+        csv = u"""2014-05-04T23:59:59.998Z,1
                  2014-05-04T23:59:59.999Z,2
                  2014-05-04T23:59:59.999Z,3
                  2014-05-05T00:00:00.000Z,4
@@ -172,7 +175,7 @@ class TsTableFileTestCase(unittest.TestCase):
 
     def test_no_data_stored_in_missing_day(self):
         # Note that May 5 is missing
-        csv = """2014-05-04T23:59:59.998Z,1
+        csv = u"""2014-05-04T23:59:59.998Z,1
                  2014-05-04T23:59:59.999Z,2
                  2014-05-04T23:59:59.999Z,3
                  2014-05-06T00:00:00.000Z,4
@@ -197,7 +200,7 @@ class TsTableFileTestCase(unittest.TestCase):
 
     def test_exception_on_unsorted_data(self):
         # Note that this is unsorted
-        csv = """2014-05-05T23:59:59.998Z,1
+        csv = u"""2014-05-05T23:59:59.998Z,1
                  2014-05-04T23:59:59.999Z,2
                  2014-05-04T23:59:59.999Z,3
                  2014-05-06T00:00:00.000Z,4
@@ -207,7 +210,7 @@ class TsTableFileTestCase(unittest.TestCase):
 
     def test_append_no_data(self):
         # No data, just making sure this doesn't throw an exception or anything
-        csv = """"""
+        csv = u""""""
 
         ts,rows = self.__load_csv_data(csv)
 
