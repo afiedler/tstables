@@ -69,7 +69,7 @@ class Benchmark:
 
         def read_random_hour(ts,min_dt,max_dt):
             rnd = numpy.random.rand(1)[0]
-            start_offset = (max_dt - min_dt - datetime.timedelta(hours=1)) * rnd
+            start_offset = datetime.timedelta(seconds=(max_dt - min_dt - datetime.timedelta(hours=1)).total_seconds() * rnd)
             start_dt = min_dt + start_offset
             end_dt = start_dt + datetime.timedelta(hours=1)
 
