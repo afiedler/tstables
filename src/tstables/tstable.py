@@ -12,6 +12,9 @@ class TsTable:
     # Partition size is one day (in milliseconds)
     PARTITION_SIZE = numpy.int64(86400000)
 
+    # The maximum partition size to read completely into memory before using Table.read_where.
+    MAX_FULL_PARTITION_READ_SIZE = 25*1e6
+
     def __init__(self,pt_file,root_group,description,title="",filters=None,
         expectedrows_per_partition=10000,chunkshape=None,byteorder=None):
         self.file = pt_file
@@ -98,14 +101,19 @@ class TsTable:
             # If the partition group is missing, then return an empty array
             return numpy.ndarray(shape=0,dtype=self.__v_dtype())
 
-        # It is faster to fetch the entire partition into memory and process it with NumPy than to use Table.read_where
-        p_data = d_group.ts_data.read()
-        start_ts = self.__dt_to_ts(start_dt)
-        end_ts = self.__dt_to_ts(end_dt)
-        start_idx = numpy.searchsorted(p_data['timestamp'], start_ts, side='left')
-        end_idx = numpy.searchsorted(p_data['timestamp'], end_ts, side='right')
-
-        return p_data[start_idx:end_idx]
+        # It is faster to fetch the entire partition into memory and process it with NumPy than to
+        # use Table.read_where. However, Table.read_where might be needed for very large partitions
+        # where memory usage is a concern.
+        if d_group.ts_data.rowsize * d_group.ts_data.nrows < TsTable.MAX_FULL_PARTITION_READ_SIZE:
+            p_data = d_group.ts_data.read()
+            start_ts = self.__dt_to_ts(start_dt)
+            end_ts = self.__dt_to_ts(end_dt)
+            start_idx = numpy.searchsorted(p_data['timestamp'], start_ts, side='left')
+            end_idx = numpy.searchsorted(p_data['timestamp'], end_ts, side='right')
+            return p_data[start_idx:end_idx]
+        else:
+            return d_group.ts_data.read_where('(timestamp >= {0}) & (timestamp <= {1})'.format(
+                self.__dt_to_ts(start_dt),self.__dt_to_ts(end_dt)))
 
     def __fetch_first_table(self):
         y_group = self.root_group._f_list_nodes()[0]
