@@ -10,11 +10,14 @@ except ImportError:
     from cStringIO import StringIO
 import os
 import pandas
+import mock
+import numpy
 
 # Class to define record structure
 class Price(tables.IsDescription):
     timestamp = tables.Int64Col(pos=0)
     price = tables.Int32Col(pos=1)
+
 
 class TsTableFileTestCase(unittest.TestCase):
 
@@ -103,6 +106,112 @@ class TsTableFileTestCase(unittest.TestCase):
         # Confirm equality
         for idx,p in enumerate(rows_read['price']):
             self.assertEqual(p,rows['price'][idx])
+
+
+    @mock.patch.object(tstables.TsTable, 'MAX_FULL_PARTITION_READ_SIZE', 1)
+    def test_load_same_timestamp(self):
+
+        # Test data that is multiple rows with the same timestamp
+        csv = u"""2014-05-05T01:01:01.100Z,1
+                 2014-05-05T01:01:01.100Z,2
+                 2014-05-05T01:01:01.100Z,3
+                 2014-05-05T01:01:01.100Z,4
+                 2014-05-05T01:01:01.100Z,5"""
+
+        sfile = StringIO(csv)
+
+        # Note: don't need the 'timestamp' column in the dtype param here because it will become the DatetimeIndex.
+        rows = pandas.read_csv(sfile,parse_dates=[0],index_col=0,names=['timestamp', 'price'],dtype={'price': 'i4'})
+
+        ts = self.h5_file.create_ts('/','EURUSD',description=Price)
+        ts.append(rows)
+
+        # Inspect to ensure that data has been stored correctly
+        tbl = ts.root_group.y2014.m05.d05.ts_data
+
+        self.assertEqual(tbl.nrows,5)
+
+        # Fetch rows over a larger range
+        rows_read = ts.read_range(datetime.datetime(2014,5,5,tzinfo=pytz.utc),datetime.datetime(2014,5,6,tzinfo=pytz.utc))
+
+        # Confirm equality
+        for idx,p in enumerate(rows_read['price']):
+            self.assertEqual(p,rows['price'][idx])
+
+        # Fetch rows over the smallest possible range
+        rows_read = ts.read_range(datetime.datetime(2014,5,5,1,1,1,100*1000,tzinfo=pytz.utc),
+                                  datetime.datetime(2014,5,5,1,1,1,100*1000,tzinfo=pytz.utc))
+
+        # Confirm equality
+        for idx,p in enumerate(rows_read['price']):
+            self.assertEqual(p,rows['price'][idx])
+
+
+    @mock.patch.object(tstables.TsTable, 'MAX_FULL_PARTITION_READ_SIZE', 1)
+    @mock.patch.object(tables.Table, 'read_where')
+    @mock.patch.object(tables.Table, 'read')
+    def test_read_using_read_where(self, mock_read, mock_read_where):
+
+        csv = u"""2014-05-05T01:01:01.100Z,1
+                 2014-05-05T01:01:01.100Z,2
+                 2014-05-05T01:01:01.100Z,3
+                 2014-05-05T01:01:01.100Z,4
+                 2014-05-05T01:01:01.100Z,5"""
+
+        sfile = StringIO(csv)
+
+        # Note: don't need the 'timestamp' column in the dtype param here because it will become the DatetimeIndex.
+        rows = pandas.read_csv(sfile,parse_dates=[0],index_col=0,names=['timestamp', 'price'],dtype={'price': 'i4'})
+
+        ts = self.h5_file.create_ts('/','EURUSD',description=Price)
+        ts.append(rows)
+
+        # Inspect to ensure that data has been stored correctly
+        tbl = ts.root_group.y2014.m05.d05.ts_data
+
+        self.assertEqual(tbl.nrows,5)
+
+        # Table.read_where is a mock, so we need to give it a return value
+        mock_read_where.return_value = numpy.ndarray(shape=0,dtype=[('timestamp', '<i8'), ('price', '<i4')])
+
+        # Fetch rows over a larger range
+        rows_read = ts.read_range(datetime.datetime(2014,5,5,tzinfo=pytz.utc),datetime.datetime(2014,5,6,tzinfo=pytz.utc))
+
+        self.assertEquals(mock_read_where.called, True)
+        self.assertEquals(mock_read.called, False)
+
+    @mock.patch.object(tables.Table, 'read_where')
+    @mock.patch.object(tables.Table, 'read')
+    def test_read_using_read_where(self, mock_read, mock_read_where):
+
+        csv = u"""2014-05-05T01:01:01.100Z,1
+                 2014-05-05T01:01:01.100Z,2
+                 2014-05-05T01:01:01.100Z,3
+                 2014-05-05T01:01:01.100Z,4
+                 2014-05-05T01:01:01.100Z,5"""
+
+        sfile = StringIO(csv)
+
+        # Note: don't need the 'timestamp' column in the dtype param here because it will become the DatetimeIndex.
+        rows = pandas.read_csv(sfile,parse_dates=[0],index_col=0,names=['timestamp', 'price'],dtype={'price': 'i4'})
+
+        ts = self.h5_file.create_ts('/','EURUSD',description=Price)
+        ts.append(rows)
+
+        # Inspect to ensure that data has been stored correctly
+        tbl = ts.root_group.y2014.m05.d05.ts_data
+
+        self.assertEqual(tbl.nrows,5)
+
+        # Table.read_where is a mock, so we need to give it a return value
+        mock_read.return_value = numpy.ndarray(shape=0,dtype=[('timestamp', '<i8'), ('price', '<i4')])
+
+        # Fetch rows over a larger range
+        rows_read = ts.read_range(datetime.datetime(2014,5,5,tzinfo=pytz.utc),datetime.datetime(2014,5,6,tzinfo=pytz.utc))
+
+        self.assertEquals(mock_read_where.called, False)
+        self.assertEquals(mock_read.called, True)
+
 
     def __load_csv_data(self,csv):
         sfile = StringIO(csv)
